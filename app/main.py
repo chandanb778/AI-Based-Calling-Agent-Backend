@@ -132,5 +132,6 @@ if __name__ == "__main__":
         WorkerOptions(
             entrypoint_fnc=_get_entrypoint(),
             agent_name=settings.agent_name,
+            http_server=False,   # ✅ THIS FIXES YOUR ISSUE
         )
     )
