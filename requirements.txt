@@ -14,10 +14,11 @@ pydantic-settings~=2.0
 
 # Supabase
 supabase~=2.0
+httpx>=0.24.0         # required by supabase v2 async client
 
 # Lead Generation
 groq>=1.0
 
-# FastAPI
+# FastAPI + server
 fastapi~=0.115.0
 uvicorn[standard]~=0.34.0

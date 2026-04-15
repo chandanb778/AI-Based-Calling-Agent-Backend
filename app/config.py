@@ -14,8 +14,8 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
-# ── Load .env.local before Pydantic reads os.environ ──
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env.local"))
+# ── Load .env.local for local dev (silently ignored if file doesn't exist) ──
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env.local"), override=False)
 
 
 class Settings(BaseSettings):
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     max_call_duration_seconds: int = Field(default=600, description="Max call duration before auto-hangup")
 
     # ── FastAPI ──
-    api_port: int = Field(default=8081, description="FastAPI server port")
+    api_port: int = Field(default=8000, description="FastAPI server port (overridden by $PORT on Railway)")
     api_host: str = Field(default="0.0.0.0", description="FastAPI server host")
 
     # ── Bulk calling ──
@@ -65,6 +65,7 @@ class Settings(BaseSettings):
         "env_file_encoding": "utf-8",
         "case_sensitive": False,
         "extra": "ignore",          # Don't crash on unknown env vars
+        "env_ignore_empty": True,   # Ignore empty env vars
     }
 
 

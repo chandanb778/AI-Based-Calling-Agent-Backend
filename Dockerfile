@@ -2,9 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# System deps for audio processing
+# System deps for audio processing + onnxruntime (Silero VAD)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python deps
@@ -16,8 +17,12 @@ COPY app/ app/
 COPY worker/ worker/
 COPY scripts/ scripts/
 
-# Port for FastAPI
-EXPOSE 8081
+# Railway injects $PORT dynamically — expose a default for local use
+EXPOSE 8000
 
-# Run the combined FastAPI + LiveKit worker
-CMD ["python", "-m", "app.main", "start"]
+# Health check so Railway knows the container is alive
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:' + __import__('os').environ.get('PORT','8000') + '/health')"
+
+# Entrypoint: start both FastAPI and the LiveKit worker
+CMD ["python", "-m", "app.main"]
