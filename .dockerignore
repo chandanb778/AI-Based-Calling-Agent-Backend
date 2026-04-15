@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+venv
+.venv
+__pycache__
+*.pyc
+*.pyo
+.env
+.env.local
+.env.production
+*.onnx
+*.log
+.vscode
+.idea
+dist
+build

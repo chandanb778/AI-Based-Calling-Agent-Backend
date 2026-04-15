@@ -1,0 +1,23 @@
+# Horizon Realty AI Voice Agent — Python Dependencies
+
+# LiveKit Core
+livekit>=1.0
+livekit-agents[silero,turn_detector]~=1.4
+
+# AI Model Plugins
+livekit-plugins-sarvam~=1.0
+livekit-plugins-groq~=1.0
+
+# Environment & Config
+python-dotenv~=1.0
+pydantic-settings~=2.0
+
+# Supabase
+supabase~=2.0
+
+# Lead Generation
+groq>=1.0
+
+# FastAPI
+fastapi~=0.115.0
+uvicorn[standard]~=0.34.0
