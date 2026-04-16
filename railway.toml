@@ -3,8 +3,8 @@
 dockerfile = "Dockerfile"
 
 [deploy]
-# Railway auto-injects $PORT — your app must listen on it
-startCommand = "sh -c 'uvicorn app.main:app --host 0.0.0.0 --port $PORT'"
+# The app.main module will start both FastAPI (on $PORT) and the LiveKit worker
+startCommand = "python -m app.main start"
 
 # Health check: Railway will probe this before marking the service healthy
 # Adjust the path/interval to match your FastAPI /health endpoint
