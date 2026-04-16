@@ -13,6 +13,8 @@ Run with:
 
 from __future__ import annotations
 
+import os
+import sys
 import threading
 import time
 import traceback
@@ -129,13 +131,13 @@ if __name__ == "__main__":
     logger.info("🌐 FastAPI server started on %s:%d", settings.api_host, settings.api_port)
 
     # 2. Start the LiveKit agent worker (main blocking call)
+    #    Inject 'start' subcommand so the Typer CLI doesn't just print help
+    if len(sys.argv) == 1 or sys.argv[-1] not in ("start", "dev", "connect", "download-files", "console"):
+        sys.argv.append("start")
+
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=_get_entrypoint(),
             agent_name=settings.agent_name,
         )
     )
-
-@app.get("/health")
-async def health():
-    return {"status": "ok"}

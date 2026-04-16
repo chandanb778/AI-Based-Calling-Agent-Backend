@@ -18,11 +18,12 @@ COPY worker/ worker/
 COPY scripts/ scripts/
 
 # Railway injects $PORT dynamically — expose a default for local use
-EXPOSE 8000
+EXPOSE 8081
 
 # Health check so Railway knows the container is alive
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:' + __import__('os').environ.get('PORT','8000') + '/health')"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:' + __import__('os').environ.get('PORT','8081') + '/health')"
 
 # Entrypoint: start both FastAPI and the LiveKit worker
-CMD ["python", "-m", "app.main"]
+# 'start' subcommand is needed for the LiveKit CLI (Typer) to actually run the worker
+CMD ["python", "-m", "app.main", "start"]

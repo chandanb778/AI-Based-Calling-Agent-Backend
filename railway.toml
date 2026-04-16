@@ -4,12 +4,12 @@ dockerfile = "Dockerfile"
 
 [deploy]
 # Railway auto-injects $PORT — your app must listen on it
-startCommand = "python -m app.main"
+startCommand = "python -m app.main start"
 
 # Health check: Railway will probe this before marking the service healthy
 # Adjust the path/interval to match your FastAPI /health endpoint
 healthcheckPath = "/health"
-healthcheckTimeout = 60          # seconds to wait for a healthy response
+healthcheckTimeout = 120          # seconds to wait for a healthy response
 
 # Give the LiveKit worker time to connect before Railway considers it unhealthy
 # The worker + model download can take up to 60s on cold start
