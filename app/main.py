@@ -8,12 +8,11 @@ This module:
 4. Starts the LiveKit agent worker as the main process
 
 Run with:
-    python -m app.main
+    python -m app.main dev
 """
 
 from __future__ import annotations
 
-import os
 import threading
 import time
 import traceback
@@ -22,6 +21,8 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+from livekit.agents import cli, WorkerOptions
 
 from app.config import settings
 from app.api.routes import router
@@ -43,7 +44,7 @@ def create_app() -> FastAPI:
         version="2.0.0",
     )
 
-    # ── CORS ──
+    # ── CORS (for frontend later) ──
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],      # Restrict in production
@@ -93,32 +94,15 @@ app = create_app()
 
 
 # ────────────────────────────────────────────────────────────────────
-# Port resolution — Railway injects $PORT dynamically
-# ────────────────────────────────────────────────────────────────────
-
-def get_port() -> int:
-    """Return the port to bind on. Railway sets $PORT; fallback to settings."""
-    port_env = os.environ.get("PORT")
-    if port_env:
-        try:
-            return int(port_env)
-        except ValueError:
-            pass
-    return settings.api_port
-
-
-# ────────────────────────────────────────────────────────────────────
 # Background API server
 # ────────────────────────────────────────────────────────────────────
 
 def start_api_server() -> None:
     """Run the FastAPI server (blocking — intended for a daemon thread)."""
-    port = get_port()
-    logger.info("🌐 Starting FastAPI on %s:%d", settings.api_host, port)
     uvicorn.run(
         app,
         host=settings.api_host,
-        port=port,
+        port=settings.api_port,
         log_level="info",
     )
 
@@ -138,16 +122,11 @@ def _get_entrypoint():
 # ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    from livekit.agents import cli, WorkerOptions
-
+    logger.info("Starting app with settings: host=%s, port=%d, agent=%s", settings.api_host, settings.api_port, settings.agent_name)
     # 1. Start FastAPI in a background daemon thread
-    #    Railway health checks hit /health — this must start before the worker.
     api_thread = threading.Thread(target=start_api_server, daemon=True)
     api_thread.start()
-
-    # Give uvicorn a moment to bind the port before the worker starts
-    time.sleep(2)
-    logger.info("🌐 FastAPI thread started")
+    logger.info("🌐 FastAPI server started on %s:%d", settings.api_host, settings.api_port)
 
     # 2. Start the LiveKit agent worker (main blocking call)
     cli.run_app(
