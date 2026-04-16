@@ -120,21 +120,67 @@ def _get_entrypoint():
 
 
 # ────────────────────────────────────────────────────────────────────
-# Main (LiveKit Worker Entrypoint)
+# Main (Process Manager or Worker)
 # ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    logger.info("Starting LiveKit agent worker: agent=%s", settings.agent_name)
-    
-    # Start the LiveKit agent worker (main blocking call)
-    # Inject 'start' subcommand so the Typer CLI doesn't just print help
-    if len(sys.argv) == 1 or sys.argv[-1] not in ("start", "dev", "connect", "download-files", "console"):
-        sys.argv.append("start")
+    if len(sys.argv) > 1 and sys.argv[1] == "run_worker":
+        logger.info("Starting LiveKit agent worker: agent=%s", settings.agent_name)
+        # Act purely as the livekit worker process.
+        # Ensure Typer CLI sees standard commands (like 'start')
+        if sys.argv[-1] not in ("start", "dev", "connect", "download-files", "console"):
+            sys.argv.append("start")
 
-    cli.run_app(
-        WorkerOptions(
-            entrypoint_fnc=_get_entrypoint(),
-            agent_name=settings.agent_name,
-            port=0,  # Use random port
+        # Strip 'run_worker' from args so cli.run_app doesn't get confused
+        sys.argv.remove("run_worker")
+
+        cli.run_app(
+            WorkerOptions(
+                entrypoint_fnc=_get_entrypoint(),
+                agent_name=settings.agent_name,
+                port=0,  # Use random port for internal LiveKit healthcheck
+            )
         )
-    )
+    else:
+        # Act as the Process Manager
+        import subprocess
+        port = os.environ.get("PORT", "8081")
+        logger.info("==========================================")
+        logger.info("🚀 SPAWNING MULTIPROCESS MANAGER")
+        logger.info("==========================================")
+        logger.info(f"Binding FastAPI Uvicorn to internal port: {port}")
+
+        # Start LiveKit Agent Worker background process
+        worker_process = subprocess.Popen(
+            [sys.executable, "-m", "app.main", "run_worker", "start"],
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+
+        # Start Uvicorn FastAPI Server foreground process
+        uvicorn_process = subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", port],
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+
+        logger.info("Successfully spanned both services! Polling health...")
+
+        # Monitor processes
+        try:
+            while True:
+                time.sleep(1)
+                if uvicorn_process.poll() is not None:
+                    logger.error("🛑 Uvicorn server crashed unexpectedly. Tearing down.")
+                    worker_process.terminate()
+                    sys.exit(1)
+                
+                if worker_process.poll() is not None:
+                    logger.error("🛑 LiveKit Worker crashed unexpectedly. Tearing down.")
+                    uvicorn_process.terminate()
+                    sys.exit(1)
+        except KeyboardInterrupt:
+            logger.info("Received interrupt. Terminating gracefully...")
+            worker_process.terminate()
+            uvicorn_process.terminate()
+            sys.exit(0)
