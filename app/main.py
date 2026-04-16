@@ -139,5 +139,6 @@ if __name__ == "__main__":
         WorkerOptions(
             entrypoint_fnc=_get_entrypoint(),
             agent_name=settings.agent_name,
+            port=0,  # Use random port — FastAPI already occupies api_port for Railway health checks
         )
     )
