@@ -3,9 +3,6 @@
 dockerfile = "Dockerfile"
 
 [deploy]
-# Start Livekit worker in background (&) and FastAPI in foreground (listening on $PORT)
-startCommand = "python -m app.main start & uvicorn app.main:app --host 0.0.0.0 --port $PORT"
-
 # Health check: Railway will probe this before marking the service healthy
 # Adjust the path/interval to match your FastAPI /health endpoint
 healthcheckPath = "/health"

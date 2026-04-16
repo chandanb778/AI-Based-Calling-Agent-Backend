@@ -19,7 +19,8 @@ COPY scripts/ scripts/
 
 # Railway injects $PORT dynamically
 EXPOSE 8081
+ENV PYTHONUNBUFFERED=1
 
-# Railway edge proxy handles health checks automatically via railway.toml
-# CMD is ignored if railway.toml startCommand is provided, but we set a safe default.
-CMD ["sh", "-c", "python -m app.main start & uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8081}"]
+COPY start.py start.py
+
+CMD ["python", "start.py"]
