@@ -120,18 +120,14 @@ def _get_entrypoint():
 
 
 # ────────────────────────────────────────────────────────────────────
-# Main
+# Main (LiveKit Worker Entrypoint)
 # ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    logger.info("Starting app with settings: host=%s, port=%d, agent=%s", settings.api_host, settings.api_port, settings.agent_name)
-    # 1. Start FastAPI in a background daemon thread
-    api_thread = threading.Thread(target=start_api_server, daemon=True)
-    api_thread.start()
-    logger.info("🌐 FastAPI server started on %s:%d", settings.api_host, settings.api_port)
-
-    # 2. Start the LiveKit agent worker (main blocking call)
-    #    Inject 'start' subcommand so the Typer CLI doesn't just print help
+    logger.info("Starting LiveKit agent worker: agent=%s", settings.agent_name)
+    
+    # Start the LiveKit agent worker (main blocking call)
+    # Inject 'start' subcommand so the Typer CLI doesn't just print help
     if len(sys.argv) == 1 or sys.argv[-1] not in ("start", "dev", "connect", "download-files", "console"):
         sys.argv.append("start")
 
@@ -139,6 +135,6 @@ if __name__ == "__main__":
         WorkerOptions(
             entrypoint_fnc=_get_entrypoint(),
             agent_name=settings.agent_name,
-            port=0,  # Use random port — FastAPI already occupies api_port for Railway health checks
+            port=0,  # Use random port
         )
     )

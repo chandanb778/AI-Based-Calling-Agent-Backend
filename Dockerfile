@@ -17,13 +17,9 @@ COPY app/ app/
 COPY worker/ worker/
 COPY scripts/ scripts/
 
-# Railway injects $PORT dynamically — expose a default for local use
+# Railway injects $PORT dynamically
 EXPOSE 8081
 
-# Health check so Railway knows the container is alive
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:' + __import__('os').environ.get('PORT','8081') + '/health')"
-
-# Entrypoint: start both FastAPI and the LiveKit worker
-# 'start' subcommand is needed for the LiveKit CLI (Typer) to actually run the worker
-CMD ["python", "-m", "app.main", "start"]
+# Railway edge proxy handles health checks automatically via railway.toml
+# CMD is ignored if railway.toml startCommand is provided, but we set a safe default.
+CMD ["sh", "-c", "python -m app.main start & uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8081}"]
