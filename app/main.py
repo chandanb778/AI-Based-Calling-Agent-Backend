@@ -135,3 +135,7 @@ if __name__ == "__main__":
             agent_name=settings.agent_name,
         )
     )
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
